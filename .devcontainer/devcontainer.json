@@ -7,7 +7,6 @@
         "vscode": {
             "settings": {
                 "dev.containers.defaultExtensions": ["ms-python.python"],
-                "terminal.integrated.shell.linux": "/bin/zsh",
                 "terminal.integrated.defaultProfile.linux": "zsh",
                 "terminal.integrated.profiles.linux": {
                     "zsh": { "path": "/bin/zsh" }
@@ -15,5 +14,6 @@
             }
         }
     },
-    "postCreateCommand": "chsh -s $(which zsh)"
+    "overrideCommand": false,
+    "remoteUser": "root"
 }
