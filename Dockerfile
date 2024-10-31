@@ -6,6 +6,10 @@ RUN sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master
 
 WORKDIR /home
 COPY pyproject.toml .
+
+# Configure poetry to create the virtualenv inside the project directory
+RUN poetry config virtualenvs.in-project true
 RUN poetry install
 
-CMD [ "zsh", "-c", "poetry shell" ]
+# Use the virtual environment's Python directly
+CMD [ "zsh" ]
