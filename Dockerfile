@@ -1,4 +1,4 @@
-FROM python:3.12.7-bookworm
+FROM python:3.11-bookworm
 
 RUN apt-get update && apt-get install -y zsh
 RUN pip install poetry==1.8.4
