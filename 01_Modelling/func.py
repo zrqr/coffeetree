@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 from scipy import stats
 import matplotlib.pyplot as plt
-from sklearn.preprocessing import LabelEncoder
 
 def calculate_continuous_gini(y_true, y_pred, debug=False):
     """
@@ -178,84 +177,58 @@ def get_feature_importance(model, feature_names=None):
     
     return df
 
-def create_shap_density_plot(feature_values, shap_values, feature_name):
+
+def plot_shapley_values(shapley_df, features_df, variable_name):
     """
-    Create a density plot showing feature SHAP values with a trend line.
+    Create a plot showing individual Shapley values and their averages for a given variable.
     
     Parameters:
-        feature_values: array-like, feature values (numeric or categorical)
-        shap_values: array-like, corresponding SHAP values
-        feature_name: str, name of the feature
+    shapley_df: DataFrame containing Shapley values (one column per variable)
+    features_df: DataFrame containing the original feature values
+    variable_name: String, name of the variable to plot
     """
-    # Convert inputs to numpy arrays and handle categorical features
-    shap_values = np.array(shap_values, dtype=float)
-    is_categorical = feature_values.dtype.name in ('object', 'category')
+    # Extract Shapley values and feature values for the specified variable
+    shapley_values = shapley_df[variable_name]
+    feature_values = features_df[variable_name]
     
-    if is_categorical:
-        le = LabelEncoder()
-        feature_values = le.fit_transform(feature_values)
-        categories = le.classes_
-    else:
-        feature_values = np.array(feature_values, dtype=float)
-    
-    # Remove NaN values
-    mask = ~(np.isnan(feature_values) | np.isnan(shap_values))
-    feature_values = feature_values[mask]
-    shap_values = shap_values[mask]
-    
-    # Create plot
+    # Create figure and axis
     plt.figure(figsize=(10, 6))
     
-    # Calculate point density
-    try:
-        xy = np.vstack([feature_values, shap_values])
-        density = stats.gaussian_kde(xy)(xy)
-        density_norm = (density - density.min()) / (density.max() - density.min())
-        
-        # Sort by density
-        idx = density_norm.argsort()
-        plt.scatter(feature_values[idx], shap_values[idx],
-                   c='#2196F3', alpha=density_norm[idx], s=50,
-                   label='SHAP values')
-    except:
-        plt.scatter(feature_values, shap_values, 
-                   c='#2196F3', alpha=0.5, s=50,
-                   label='SHAP values')
+    # Create scatter plot of individual Shapley values
+    plt.scatter(feature_values, shapley_values, alpha=0.4, color='blue', label='Individual Shapley Values')
     
-    # Add trend line
-    if is_categorical:
-        # Mean SHAP per category
-        unique_vals = np.unique(feature_values)
-        mean_shap = [np.mean(shap_values[feature_values == val]) for val in unique_vals]
-        plt.plot(unique_vals, mean_shap, 'r-', linewidth=2, label='Mean SHAP')
-        plt.xticks(unique_vals, categories, rotation=45, ha='right')
-    else:
-        # Moving average trend line
-        sort_idx = np.argsort(feature_values)
-        window = max(len(feature_values) // 30, 1)
-        trend = np.convolve(shap_values[sort_idx], 
-                           np.ones(window)/window, 'valid')
-        trend_x = feature_values[sort_idx][window-1:]
-        plt.plot(trend_x, trend, 'r-', linewidth=2, label='Trend')
+    # Calculate average Shapley values for each unique feature value
+    avg_shapley = pd.DataFrame({
+        'feature_value': feature_values,
+        'shapley_value': shapley_values
+    }).groupby('feature_value')['shapley_value'].mean().reset_index()
     
-    # Styling
-    plt.title(f'SHAP Values Distribution for {feature_name}', fontsize=12, pad=20)
-    plt.xlabel(feature_name)
-    plt.ylabel('SHAP Value')
-    plt.axhline(y=0, color='black', linestyle='--', alpha=0.3)
-    plt.grid(True, alpha=0.3)
+    # Sort by feature value for proper line plotting
+    avg_shapley = avg_shapley.sort_values('feature_value')
+    
+    # Plot average line
+    plt.plot(avg_shapley['feature_value'], 
+             avg_shapley['shapley_value'], 
+             color='red', 
+             linewidth=2, 
+             label='Average Shapley Value')
+    
+    # Customize plot
+    plt.xlabel(f'{variable_name} Value')
+    plt.ylabel('Shapley Value')
+    plt.title(f'Shapley Values Distribution for {variable_name}')
     plt.legend()
-    plt.tight_layout()
+    plt.grid(True, alpha=0.3)
     
     return plt
 
 # Example usage:
 """
-feature_name = 'example_feature'
-plot = create_shap_density_plot(
-    feature_values=df[feature_name],
-    shap_values=shap_values[feature_name],
-    feature_name=feature_name
-)
-plt.show()
+# Assuming you have your data in these DataFrames:
+shapley_df = pd.DataFrame(...)  # Shapley values
+features_df = pd.DataFrame(...) # Original feature values
+
+# Create plot for a specific variable
+plot = plot_shapley_values(shapley_df, features_df, 'variable_name')
+plot.show()
 """
