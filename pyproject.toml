@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "coffeetree"
+version = "0.0.1"
+description = "Modelo do cafe"
+authors = ["Caiozuz e Pedrozuz"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.13"
+kaleido = "0.2.1"
+pycaret = "^3.3.2"
+shap = "^0.46.0"
+seaborn = "^0.13.2"
+
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.29.5"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
